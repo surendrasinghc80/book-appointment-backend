@@ -4,6 +4,7 @@ import { pool } from "../db.js";
 export async function createAppointment({
   userId,
   name,
+  discreption,
   phoneNumber,
   date, // 'YYYY-MM-DD'
   time, // 'HH:MM:SS'
@@ -11,8 +12,8 @@ export async function createAppointment({
 }) {
   const sql = `
     INSERT INTO appointments
-      (patientId, userId, name, phoneNumber, date, time, status)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+      (patientId, userId, name, discreption, phoneNumber, date, time, status)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
   // Generate a placeholder for now
@@ -22,6 +23,7 @@ export async function createAppointment({
     tempPatientId,
     userId,
     name,
+    discreption,
     phoneNumber,
     date,
     time,
@@ -38,4 +40,31 @@ export async function createAppointment({
   ]);
 
   return { insertId: result.insertId, patientId: generatedPatientId };
+}
+
+export async function getAppointmentsByUserId(userId) {
+  const [rows] = await pool.execute(
+    `SELECT * FROM appointments WHERE userId = ? ORDER BY date DESC, time DESC`,
+    [userId]
+  );
+  return rows;
+}
+
+export async function getAllAppointments() {
+  const [rows] = await pool.execute(
+    `SELECT * FROM appointments ORDER BY date DESC, time DESC`
+  );
+  return rows;
+}
+
+export async function updateAppointmentStatus(id, status) {
+  const sql = `UPDATE appointments SET status = ? WHERE id = ?`;
+  const [result] = await pool.execute(sql, [status, id]);
+  return result.affectedRows;
+}
+
+export async function deleteAppointmentById(appointmentId) {
+  const sql = `DELETE FROM appointments WHERE id = ?`;
+  const [rows] = await pool.execute(sql, [appointmentId]);
+  return rows.affectedRows;
 }

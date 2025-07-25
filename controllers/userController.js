@@ -14,7 +14,6 @@ const generateToken = (userId) => {
 };
 
 // Register a user
-
 export const registerUser = async (req, res) => {
   try {
     const parsed = registerUserSchema.safeParse(req.body);
@@ -104,13 +103,11 @@ export const loginUser = async (req, res) => {
         id: existingUser.id,
         name: existingUser.name,
         email: existingUser.email,
+        role: existingUser.role,
         phoneNumber: existingUser.phoneNumber,
       },
     });
   } catch (error) {
-    if (error.name === "ZodError") {
-      return res.status(400).json({ message: error.errors[0].message });
-    }
     console.log("Login Error", error);
     res.status(500).json({ message: "❌ Server crashed" });
   }

@@ -7,7 +7,7 @@ export const createUser = async ({ name, email, password, phoneNumber }) => {
     "INSERT INTO users (name, email, password, phoneNumber) VALUES (?,?,?,?)",
     [name, email, password, phoneNumber]
   );
-  return result.inserId;
+  return result.insertId;
 };
 
 export const findUserByEmail = async (email) => {
