@@ -6,21 +6,35 @@ export async function createAppointment({
   name,
   discreption,
   phoneNumber,
-  date, // 'YYYY-MM-DD'
-  time, // 'HH:MM:SS'
-  status = "Pending",
+  date,
+  time,
+  status = "pending",
 }) {
+  // 1️⃣ Check if user already has a patientId from previous appointments
+  const [existing] = await pool.execute(
+    `SELECT patientId FROM appointments WHERE userId = ? LIMIT 1`,
+    [userId]
+  );
+
+  let patientId;
+
+  if (existing.length > 0) {
+    // Reuse existing patientId
+    patientId = existing[0].patientId;
+  } else {
+    // Will create new patientId after insert
+    patientId = "TEMP";
+  }
+
+  // 2️⃣ Insert appointment
   const sql = `
     INSERT INTO appointments
       (patientId, userId, name, discreption, phoneNumber, date, time, status)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
-  // Generate a placeholder for now
-  const tempPatientId = "TEMP";
-
   const [result] = await pool.execute(sql, [
-    tempPatientId,
+    patientId,
     userId,
     name,
     discreption,
@@ -30,16 +44,17 @@ export async function createAppointment({
     status,
   ]);
 
-  // Generate patientId based on insertId (e.g., PAT-0001)
-  const generatedPatientId = `PAT-${String(result.insertId).padStart(4, "0")}`;
+  // 3️⃣ If patientId was TEMP, generate it now based on first appointment ID
+  if (patientId === "TEMP") {
+    patientId = `PAT-${String(result.insertId).padStart(4, "0")}`;
 
-  // Update the record with the new patientId
-  await pool.execute(`UPDATE appointments SET patientId = ? WHERE id = ?`, [
-    generatedPatientId,
-    result.insertId,
-  ]);
+    await pool.execute(`UPDATE appointments SET patientId = ? WHERE id = ?`, [
+      patientId,
+      result.insertId,
+    ]);
+  }
 
-  return { insertId: result.insertId, patientId: generatedPatientId };
+  return { insertId: result.insertId, patientId };
 }
 
 export async function getAppointmentsByUserId(userId) {
@@ -67,4 +82,15 @@ export async function deleteAppointmentById(appointmentId) {
   const sql = `DELETE FROM appointments WHERE id = ?`;
   const [rows] = await pool.execute(sql, [appointmentId]);
   return rows.affectedRows;
+}
+
+export async function getAppointmentHistoryByUserId(userId) {
+  const sql = `
+    SELECT discreption, date, patientId
+    FROM appointments
+    WHERE userId = ?
+    ORDER BY date DESC
+  `;
+  const [rows] = await pool.execute(sql, [userId]);
+  return rows;
 }

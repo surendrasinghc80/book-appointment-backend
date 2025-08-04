@@ -5,6 +5,7 @@ import {
   getAllAppointmentsController,
   editAppointmentStatus,
   deleteAppointment,
+  getAppointmentHistory,
 } from "../controllers/appointmentController.js";
 import { protect } from "../middlewares/authMiddleware.js";
 
@@ -16,8 +17,10 @@ router.get("/appointments/:userId", getMyAppointments);
 
 router.get("/all-appointments", getAllAppointmentsController);
 
-router.patch("/appointments/:id", editAppointmentStatus);
+router.post("/appointments/:id", editAppointmentStatus);
 
 router.delete("/appointments/:id", deleteAppointment);
+
+router.get("/history/:userId", getAppointmentHistory);
 
 export default router;

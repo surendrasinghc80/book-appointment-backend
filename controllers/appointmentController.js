@@ -4,6 +4,7 @@ import {
   getAllAppointments,
   updateAppointmentStatus,
   deleteAppointmentById,
+  getAppointmentHistoryByUserId,
 } from "../models/appointmentModel.js";
 
 const VALID_STATUSES = ["pending", "accepted", "rejected"];
@@ -116,9 +117,25 @@ export async function getMyAppointments(req, res, next) {
 export async function getAllAppointmentsController(req, res, next) {
   try {
     const appointments = await getAllAppointments();
-    return res
-      .status(200)
-      .json({ status: 200, success: true, data: appointments });
+
+    if (appointments.length > 0) {
+      return res.status(200).json({
+        status: 200,
+        success: true,
+        message: "Appointments",
+        data: appointments,
+      });
+    } else {
+      return res.status(200).json({
+        status: 200,
+        success: true,
+        message: "No data found",
+        data: appointments,
+      });
+    }
+    // return res
+    //   .status(200)
+    //   .json({ status: 200, success: true, data: appointments });
   } catch (err) {
     next(err);
   }
@@ -177,6 +194,26 @@ export async function deleteAppointment(req, res, next) {
       status: 200,
       message: "Appointment deleted successfully.",
       id: Number(id),
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getAppointmentHistory(req, res, next) {
+  try {
+    const { userId } = req.params;
+
+    if (!userId || Number.isNaN(Number(userId))) {
+      return res.status(400).json({ message: "Valid userId is required." });
+    }
+
+    const history = await getAppointmentHistoryByUserId(Number(userId));
+
+    return res.status(200).json({
+      status: 200,
+      success: true,
+      data: history,
     });
   } catch (err) {
     next(err);

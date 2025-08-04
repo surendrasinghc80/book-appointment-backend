@@ -5,7 +5,7 @@ import {
   loginSchema,
   registerUserSchema,
 } from "../validations/userValidation.js";
-import * as UserModel from "../models/UserModel.js";
+import * as UserModel from "../models/userModel.js";
 
 const generateToken = (userId) => {
   return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
