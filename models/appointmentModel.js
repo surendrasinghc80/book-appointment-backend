@@ -9,6 +9,8 @@ export async function createAppointment({
   date,
   time,
   status = "pending",
+  specialistIn,
+  doctorId,
 }) {
   // 1️⃣ Check if user already has a patientId from previous appointments
   const [existing] = await pool.execute(
@@ -26,11 +28,11 @@ export async function createAppointment({
     patientId = "TEMP";
   }
 
-  // 2️⃣ Insert appointment
+  // 2️⃣ Insert appointment (now also includes specialistIn & doctorId)
   const sql = `
     INSERT INTO appointments
-      (patientId, userId, name, discreption, phoneNumber, date, time, status)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      (patientId, userId, name, discreption, phoneNumber, date, time, status, specialistIn, doctorId)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
   const [result] = await pool.execute(sql, [
@@ -42,6 +44,8 @@ export async function createAppointment({
     date,
     time,
     status,
+    specialistIn,
+    doctorId,
   ]);
 
   // 3️⃣ If patientId was TEMP, generate it now based on first appointment ID
@@ -57,21 +61,25 @@ export async function createAppointment({
   return { insertId: result.insertId, patientId };
 }
 
-export async function getAppointmentsByUserId(userId) {
-  const [rows] = await pool.execute(
-    `SELECT * FROM appointments WHERE userId = ? ORDER BY date DESC, time DESC`,
+export const getAppointmentsByUserId = async (userId) => {
+  const [rows] = await pool.query(
+    `SELECT a.*, d.name as doctorName 
+     FROM appointments a
+     LEFT JOIN doctors d ON a.doctorId = d.id
+     WHERE a.userId = ?`,
     [userId]
   );
   return rows;
-}
+};
 
-export async function getAllAppointments() {
-  const [rows] = await pool.execute(
-    `SELECT * FROM appointments ORDER BY date DESC, time DESC`
+export const getAllAppointments = async () => {
+  const [rows] = await pool.query(
+    `SELECT a.*, d.name as doctorName 
+     FROM appointments a
+     LEFT JOIN doctors d ON a.doctorId = d.id`
   );
   return rows;
-}
-
+};
 export async function updateAppointmentStatus(id, status) {
   const sql = `UPDATE appointments SET status = ? WHERE id = ?`;
   const [result] = await pool.execute(sql, [status, id]);

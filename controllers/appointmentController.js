@@ -6,6 +6,7 @@ import {
   deleteAppointmentById,
   getAppointmentHistoryByUserId,
 } from "../models/appointmentModel.js";
+import { showSpecialistIn } from "../models/doctor.js";
 
 const VALID_STATUSES = ["pending", "accepted", "rejected"];
 
@@ -19,7 +20,16 @@ function isValidTime(str) {
 
 export async function addAppointment(req, res, next) {
   try {
-    const { name, discreption, phoneNumber, date, time, status } = req.body;
+    const {
+      name,
+      discreption,
+      phoneNumber,
+      date,
+      time,
+      status,
+      specialistIn,
+      doctorId,
+    } = req.body;
     const userId = req.user?.id; // userId from token
 
     if (!userId) {
@@ -27,6 +37,11 @@ export async function addAppointment(req, res, next) {
         .status(401)
         .json({ message: "Unauthorized. Token invalid or missing." });
     }
+
+    if (!specialistIn)
+      return res.status(400).json({ message: "specialistIn is required" });
+    if (!doctorId)
+      return res.status(400).json({ message: "doctorId is required" });
 
     // Validations
     if (!name) return res.status(400).json({ message: "name is required." });
@@ -59,22 +74,26 @@ export async function addAppointment(req, res, next) {
       date,
       time: time.length === 5 ? `${time}:00` : time,
       status: status || "pending",
+      specialistIn,
+      doctorId,
     });
 
     return res.status(201).json({
       message: "Appointment created successfully.",
       status: 201,
-      // data: {
-      //   id: insertId,
-      //   patientId,
-      // userId,
-      // name,
-      // discreption,
-      // phoneNumber: String(phoneNumber),
-      // date,
-      // time: time.length === 5 ? `${time}:00` : time,
-      // status: status || "pending",
-      // },
+      data: {
+        id: insertId,
+        patientId,
+        userId,
+        name,
+        discreption,
+        phoneNumber: String(phoneNumber),
+        date,
+        time: time.length === 5 ? `${time}:00` : time,
+        status: status || "pending",
+        specialistIn,
+        doctorId,
+      },
     });
   } catch (err) {
     next(err);
